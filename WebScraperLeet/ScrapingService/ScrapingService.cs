@@ -12,13 +12,14 @@ namespace WebScraperLeet.ScrapingService
             _mediator = mediator;
         }
 
-        public async Task InvokeScraper()
+        public async Task InvokeScraper(string localFilePath)
         {
-            var rootUrlsToScrape = Enumerable.Range(0, 50).Select(i => $"/catalogue/page-{i}.html");
+            var rootUrlsToScrape = Enumerable.Range(0, 50).Select(i => $"/page-{i}.html");
 
             await _mediator.Send(new ScrapingRequest()
             {
-                RootUrlsToScrape = rootUrlsToScrape
+                RootUrlsToScrape = rootUrlsToScrape,
+                LocalFilePath = localFilePath
             });
         }
     }

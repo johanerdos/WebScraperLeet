@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WebScraperLeet.ScrapingService
+namespace WebScraperLeet.HttpService
 {
-    public interface IScrapingService
+    public interface IHttpService
     {
-        Task InvokeScraper(string localFilePath);
+        Task<string> FetchUrlContentAsync(string path);
     }
 }

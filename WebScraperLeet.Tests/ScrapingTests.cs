@@ -1,16 +1,20 @@
-﻿using NUnit.Framework;
+﻿using Moq;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebScraperLeet.Features;
+using WebScraperLeet.Tests.Utils;
 
 namespace WebScraperLeet.Tests
 {
     [TestFixture]
     public class ScrapingTests
     {
+        private MockContainer? _mockContainer;
+        private readonly MockManager _mockManager = new();
         private ScrapingRequestHandler _handler;
 
 
@@ -24,19 +28,26 @@ namespace WebScraperLeet.Tests
         [SetUp]
         public void SetUp()
         {
-            _handler = new();
+            _mockContainer = _mockManager.SetUpMocks();
+            _handler = new(_mockContainer.HttpServiceMock.Object);
         }
 
         [Test]
         public async Task Should_Fetch_All_Pages()
         {
+            _mockContainer?.HttpServiceMock?.Setup(x => x.FetchUrlContentAsync(It.IsAny<string>()))
+                .Callback<string>((rootUrl) =>
+                {
+                    Assert.That(_rootUrlsToScrape, Does.Contain(rootUrl));
+                });
+
             await _handler.Handle(new ScrapingRequest()
             {
                 RootUrlsToScrape = _rootUrlsToScrape
             }, 
             CancellationToken.None);
 
-            Assert.That(_rootUrlsToScrape, Does.Contain("someRootUrl"));
+            _mockContainer?.HttpServiceMock?.Verify(x => x.FetchUrlContentAsync(It.IsAny<string>()), Times.Exactly(_rootUrlsToScrape.Count));
         }
 
         [Test]
