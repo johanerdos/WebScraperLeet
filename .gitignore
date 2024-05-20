@@ -6,3 +6,5 @@
 /WebScraperLeet/obj
 /WebScraperLeet.Tests/obj
 /.vs/ProjectEvaluation
+/WebScraperLeet.Tests/bin/Debug/net6.0
+/WebScraperLeet/bin/Debug/net6.0
