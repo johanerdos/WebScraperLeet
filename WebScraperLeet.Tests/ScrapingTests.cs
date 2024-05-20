@@ -18,12 +18,21 @@ namespace WebScraperLeet.Tests
         private ScrapingRequestHandler _handler;
 
 
-        private readonly List<string> _rootUrlsToScrape = new List<string>()
+        private readonly List<string> _rootPagesToScrape = new()
         {
             "/page-1.html",
-            "/page-2.html",
-            "/page-3.html"
+            "/page-2.html"
         };
+
+        private readonly List<string> _expectedInnerPages = new()
+        {
+            "/some_book_inner.index.html",
+            "/my_book_inner.index.html",
+            "/some_other_book_inner.index.html",
+            "/my_other_book_inner.index.html"
+        };
+
+        private readonly string _mockedHtml = "@\"\r\n<html>\r\n<body>\r\n<a href='/some_book_inner.index.html'>Page 1</a>\r\n<a href='/my_book_inner.index.html'>Page 2</a>\r\n<a href='/some_other_book_inner.index.html'>Page 3</a>\r\n<a href='/my_other_book_inner.index.html'>Page 4</a>\r\n</body>\r\n</html>\"";
 
         [SetUp]
         public void SetUp()
@@ -35,19 +44,19 @@ namespace WebScraperLeet.Tests
         [Test]
         public async Task Should_Fetch_All_Pages()
         {
+
             _mockContainer?.HttpServiceMock?.Setup(x => x.FetchUrlContentAsync(It.IsAny<string>()))
+                .Returns(Task.FromResult(_mockedHtml))
                 .Callback<string>((rootUrl) =>
                 {
-                    Assert.That(_rootUrlsToScrape, Does.Contain(rootUrl));
+                    Assert.That(_rootPagesToScrape.Contains(rootUrl) || _expectedInnerPages.Contains(rootUrl), Is.True);
                 });
 
             await _handler.Handle(new ScrapingRequest()
             {
-                RootUrlsToScrape = _rootUrlsToScrape
+                RootUrlsToScrape = _rootPagesToScrape
             }, 
             CancellationToken.None);
-
-            _mockContainer?.HttpServiceMock?.Verify(x => x.FetchUrlContentAsync(It.IsAny<string>()), Times.Exactly(_rootUrlsToScrape.Count));
         }
 
         [Test]
@@ -55,18 +64,21 @@ namespace WebScraperLeet.Tests
         {
             var myLocalFilePath = "myLocalFilePath";
 
-            _mockContainer?.FileServiceMock?.Setup(x => x.SavePageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Callback<string, string, string>((localFilePathParam, fileNameParam, contentParam) => {
+            _mockContainer?.HttpServiceMock?.Setup(x => x.FetchUrlContentAsync(It.IsAny<string>()))
+                .Returns(Task.FromResult(_mockedHtml));
+
+            _mockContainer?.FileServiceMock?.Setup(x => x.SavePageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<string, string, string, string>((localFilePathParam, fileNameParam, contentParam, parentFolderName) => {
                     Assert.Multiple(() =>
                     {
                         Assert.That(myLocalFilePath, Is.EqualTo(localFilePathParam));
-                        Assert.That(_rootUrlsToScrape, Does.Contain(fileNameParam));
+                        Assert.That(_rootPagesToScrape.Contains(fileNameParam) || _expectedInnerPages.Contains(fileNameParam), Is.True);
                     });
                 });
 
             await _handler.Handle(new ScrapingRequest()
             {
-                RootUrlsToScrape = _rootUrlsToScrape,
+                RootUrlsToScrape = _rootPagesToScrape,
                 LocalFilePath = myLocalFilePath
             },
             CancellationToken.None);
@@ -75,19 +87,23 @@ namespace WebScraperLeet.Tests
         [Test]
         public async Task Should_Fetch_All_Inner_Pages()
         {
-            var expectedInnerPagesToScrape = new List<string>()
-            {
-                "/some_book.index.html",
-                "/my_book.index.html"
-            };
+            
+
+            _mockContainer?.HttpServiceMock?.Setup(x => x.FetchUrlContentAsync(It.IsAny<string>()))
+                .Returns(Task.FromResult(_mockedHtml))
+                .Callback<string>((path) =>
+                {
+                    Assert.That(_rootPagesToScrape.Contains(path) || _expectedInnerPages.Contains(path), Is.True);
+                });
 
             await _handler.Handle(new ScrapingRequest()
             {
-                RootUrlsToScrape = _rootUrlsToScrape
+                RootUrlsToScrape = _rootPagesToScrape
             }, 
             CancellationToken.None);
 
-            Assert.That(_rootUrlsToScrape.Contains("someRootUrl") || expectedInnerPagesToScrape.Contains("someInnerUrl"), Is.True);
+            var expectedNumberOfInvocations = _rootPagesToScrape.Count * _expectedInnerPages.Count + _rootPagesToScrape.Count;
+            _mockContainer?.HttpServiceMock?.Verify(x => x.FetchUrlContentAsync(It.IsAny<string>()), Times.Exactly(expectedNumberOfInvocations));
         }
     }
 }

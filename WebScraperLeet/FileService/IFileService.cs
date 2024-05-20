@@ -8,6 +8,6 @@ namespace WebScraperLeet.FileService
 {
     public interface IFileService
     {
-        Task SavePageAsync(string localFilePath, string fileName, string content);
+        Task<string> SavePageAsync(string localFilePath, string fileName, string content, string? parentFolderName = null);
     }
 }

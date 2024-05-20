@@ -6,6 +6,7 @@ namespace WebScraperLeet.ScrapingService
     public class ScrapingService : IScrapingService
     {
         private readonly ISender _mediator;
+        private readonly string _pathToIgnore = "../index.html";
 
         public ScrapingService(ISender mediator)
         {
@@ -14,12 +15,13 @@ namespace WebScraperLeet.ScrapingService
 
         public async Task InvokeScraper(string localFilePath)
         {
-            var rootUrlsToScrape = Enumerable.Range(0, 50).Select(i => $"/page-{i}.html");
+            var rootUrlsToScrape = Enumerable.Range(1, 50).Select(i => $"page-{i}.html");
 
             await _mediator.Send(new ScrapingRequest()
             {
                 RootUrlsToScrape = rootUrlsToScrape,
-                LocalFilePath = localFilePath
+                LocalFilePath = localFilePath,
+                PathToIgnore = _pathToIgnore
             });
         }
     }
