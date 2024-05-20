@@ -4,12 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebScraperLeet.Features;
 
 namespace WebScraperLeet.Tests
 {
     [TestFixture]
     public class ScrapingTests
     {
+        private ScrapingRequestHandler _handler;
+
+
         private readonly List<string> _rootUrlsToScrape = new List<string>()
         {
             "/page-1.html",
@@ -17,16 +21,21 @@ namespace WebScraperLeet.Tests
             "/page-3.html"
         };
 
-
         [SetUp]
         public void SetUp()
         {
-
+            _handler = new();
         }
 
         [Test]
         public async Task Should_Fetch_All_Pages()
         {
+            await _handler.Handle(new ScrapingRequest()
+            {
+                RootUrlsToScrape = _rootUrlsToScrape
+            }, 
+            CancellationToken.None);
+
             Assert.That(_rootUrlsToScrape, Does.Contain("someRootUrl"));
         }
 
@@ -38,6 +47,15 @@ namespace WebScraperLeet.Tests
                 "/some_book.index.html",
                 "/my_book.index.html"
             };
+
+            await _handler.Handle(new ScrapingRequest()
+            {
+                RootUrlsToScrape = _rootUrlsToScrape
+            }, 
+            CancellationToken.None);
+
+
+            
 
             Assert.That(_rootUrlsToScrape.Contains("someRootUrl") || expectedInnerPagesToScrape.Contains("someInnerUrl"), Is.True);
         }
