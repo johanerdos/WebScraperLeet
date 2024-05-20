@@ -21,6 +21,9 @@ namespace WebScraperLeet.Features
             var rootUrlsToScrape = request.RootUrlsToScrape;
             var localFilePath = request.LocalFilePath;
 
+            var totalPaths = rootUrlsToScrape.Count();
+            var completedPaths = 0;
+
             await Task.WhenAll(rootUrlsToScrape.Select(async path =>
             {
                 var content = await _httpService.FetchUrlContentAsync(path);
@@ -28,6 +31,9 @@ namespace WebScraperLeet.Features
 
                 var innerPaths = ExtractLinks(content, request.PathToIgnore);
                 await ProcessLinksAsync(innerPaths, localFilePath, parentFolderName);
+
+                completedPaths++;
+                Console.WriteLine($"Completed scraping root path {path}. ({completedPaths} of {totalPaths})");
             }));
         }
 

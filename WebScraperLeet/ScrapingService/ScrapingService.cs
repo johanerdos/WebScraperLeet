@@ -15,6 +15,8 @@ namespace WebScraperLeet.ScrapingService
 
         public async Task InvokeScraper(string localFilePath)
         {
+            Console.WriteLine("Starting scraping service. Please wait...");
+
             var rootUrlsToScrape = Enumerable.Range(1, 50).Select(i => $"page-{i}.html");
 
             await _mediator.Send(new ScrapingRequest()
@@ -23,6 +25,8 @@ namespace WebScraperLeet.ScrapingService
                 LocalFilePath = localFilePath,
                 PathToIgnore = _pathToIgnore
             });
+
+            Console.WriteLine("Scraping complete. Press any key to exit.");
         }
     }
 }
