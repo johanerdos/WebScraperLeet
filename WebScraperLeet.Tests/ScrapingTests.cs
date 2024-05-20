@@ -29,7 +29,7 @@ namespace WebScraperLeet.Tests
         public void SetUp()
         {
             _mockContainer = _mockManager.SetUpMocks();
-            _handler = new(_mockContainer.HttpServiceMock.Object);
+            _handler = new(_mockContainer?.HttpServiceMock?.Object, _mockContainer?.FileServiceMock?.Object);
         }
 
         [Test]
@@ -51,6 +51,28 @@ namespace WebScraperLeet.Tests
         }
 
         [Test]
+        public async Task Should_Save_File()
+        {
+            var myLocalFilePath = "myLocalFilePath";
+
+            _mockContainer?.FileServiceMock?.Setup(x => x.SavePageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<string, string, string>((localFilePathParam, fileNameParam, contentParam) => {
+                    Assert.Multiple(() =>
+                    {
+                        Assert.That(myLocalFilePath, Is.EqualTo(localFilePathParam));
+                        Assert.That(_rootUrlsToScrape, Does.Contain(fileNameParam));
+                    });
+                });
+
+            await _handler.Handle(new ScrapingRequest()
+            {
+                RootUrlsToScrape = _rootUrlsToScrape,
+                LocalFilePath = myLocalFilePath
+            },
+            CancellationToken.None);
+        }
+
+        [Test]
         public async Task Should_Fetch_All_Inner_Pages()
         {
             var expectedInnerPagesToScrape = new List<string>()
@@ -64,9 +86,6 @@ namespace WebScraperLeet.Tests
                 RootUrlsToScrape = _rootUrlsToScrape
             }, 
             CancellationToken.None);
-
-
-            
 
             Assert.That(_rootUrlsToScrape.Contains("someRootUrl") || expectedInnerPagesToScrape.Contains("someInnerUrl"), Is.True);
         }

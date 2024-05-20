@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using MediatR;
+using WebScraperLeet.FileService;
 using WebScraperLeet.HttpService;
 
 namespace WebScraperLeet.Features
@@ -7,10 +8,12 @@ namespace WebScraperLeet.Features
     public class ScrapingRequestHandler : IRequestHandler<ScrapingRequest>
     {
         private readonly IHttpService _httpService;
+        private readonly IFileService _fileService;
 
-        public ScrapingRequestHandler(IHttpService httpService)
+        public ScrapingRequestHandler(IHttpService httpService, IFileService fileService)
         {
             _httpService = httpService;
+            _fileService = fileService;
         }
 
         public async Task Handle(ScrapingRequest request, CancellationToken cancellationToken)
@@ -21,28 +24,8 @@ namespace WebScraperLeet.Features
             await Task.WhenAll(rootUrlsToScrape.Select(async path =>
             {
                 var content = await _httpService.FetchUrlContentAsync(path);
-                await SavePageAsync(localFilePath, path, content);
+                await _fileService.SavePageAsync(localFilePath, path, content);
             }));
-        }
-
-        private async Task SavePageAsync(string localFilePath, string fileName, string content)
-        {
-            var folderName = Path.Combine(localFilePath, fileName);
-
-            try
-            {
-                if(!Directory.Exists(folderName))
-                {
-                    Directory.CreateDirectory(folderName);
-                }
-
-                var filePath = Path.Combine(folderName, "index.html");
-                await File.WriteAllTextAsync(filePath, content);
-            }
-            catch(Exception ex) 
-            {
-                Console.WriteLine($"An error occurred when saving the file: {ex.Message}");
-            }
         }
     }
 }

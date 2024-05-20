@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using WebScraperLeet.FileService;
 using WebScraperLeet.HttpService;
 using WebScraperLeet.ScrapingService;
 
@@ -18,6 +19,7 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
             {
                 services.AddMediatR(x => x.RegisterServicesFromAssemblyContaining<Program>());
                 services.AddSingleton<IScrapingService, ScrapingService>();
+                services.AddSingleton<IFileService, FileService>();
                 services.AddHttpClient<IHttpService, HttpService>(client =>
                 {
                     client.BaseAddress = new Uri("https://books.toscrape.com/catalogue");
